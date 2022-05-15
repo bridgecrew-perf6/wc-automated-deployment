@@ -1,0 +1,25 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set current date as env variable
+      run:  date +%s >> $BUILD_TIMESTAMP
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag wc-python:$BUILD_TIMESTAMP
+    - name: Docker Run Action
+      uses: addnab/docker-run-action@v3
+      with:
+        image: wc-python:$BUILD_TIMESTAMP
+    
