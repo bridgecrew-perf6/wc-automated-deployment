@@ -1,4 +1,7 @@
-# Instructions to build the Docker image:
-# Take any lightweight Linux as your base image (eg Alpine Linux).
-# Copy the files in the word_count folder inside the image.
-# Run the python file main.py when the containers starts by default.
+FROM python:3.10-alpine
+
+WORKDIR /usr/src/app
+
+COPY word_count .
+
+CMD [ "python", "./main.py" ]
