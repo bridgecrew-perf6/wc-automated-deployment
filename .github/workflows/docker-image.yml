@@ -18,9 +18,8 @@ jobs:
     - name: Set current date as env variable
       run: echo "BUILD_TIMESTAMP=$(date +%s)" >> $GITHUB_ENV
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag "wc-python:${{env.BUILD_TIMESTAMP}}"
-    - name: Docker Run Action
-      uses: addnab/docker-run-action@v3
-      with:
-        image: "wc-python:${{env.BUILD_TIMESTAMP}}"
+      run: docker build . --tag "wc-python:${{env.BUILD_TIMESTAMP}}"
+    - name: Run docker image
+      run: docker run "wc-python:${{env.BUILD_TIMESTAMP}}"
+
     
