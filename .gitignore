@@ -1,6 +1,9 @@
 # os specific
 .DS_Store
 
+# ide
+.vscode
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -130,3 +133,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# project inputs folder
+word_count/input_files
