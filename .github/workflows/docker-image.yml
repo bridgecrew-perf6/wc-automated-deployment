@@ -5,7 +5,8 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  
+
+
 jobs:
 
   build:
@@ -15,11 +16,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Set current date as env variable
-      run:  date +%s >> $BUILD_TIMESTAMP
+      run: echo "BUILD_TIMESTAMP=$(date +%s)" >> $GITHUB_ENV
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag wc-python:$BUILD_TIMESTAMP
+      run: docker build . --file Dockerfile --tag "wc-python:${{env.BUILD_TIMESTAMP}}"
     - name: Docker Run Action
       uses: addnab/docker-run-action@v3
       with:
-        image: wc-python:$BUILD_TIMESTAMP
+        image: "wc-python:${{env.BUILD_TIMESTAMP}}"
     
