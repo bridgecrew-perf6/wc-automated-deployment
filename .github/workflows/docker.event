@@ -1,0 +1,6 @@
+{
+  "action": "workflow_dispatch",
+  "inputs": {
+      "text_files_zip_url": "https://wc-python.s3.amazonaws.com/data/large-text.zip"
+  }
+}

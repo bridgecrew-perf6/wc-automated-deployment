@@ -1,22 +1,28 @@
 name: Docker Image CI
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      text_files_zip_url:
+        description: 'Provide zip file which contains text files that needs to count words'     
+        required: false
+        default: 'https://wc-python.s3.amazonaws.com/data/large-text.zip' 
+        type: string
 
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
     - name: Set current date as env variable
       run: echo "BUILD_TIMESTAMP=$(date +%s)" >> $GITHUB_ENV
+    - name: "Download zip file"
+      if: ${{ github.event.inputs.text_files_zip_url != '' }}
+      run: | 
+        wget ${{ github.event.inputs.text_files_zip_url }}
+        unzip $(basename ${{ github.event.inputs.text_files_zip_url }}) -d word_count/input_files/
+        ls -la word_count/input_files/
     - name: Build the Docker image
       run: docker build . --tag "wc-python:${{env.BUILD_TIMESTAMP}}"
     - name: Run docker image
