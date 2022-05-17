@@ -8,6 +8,12 @@ on:
         required: false
         default: 'https://wc-python.s3.amazonaws.com/data/large-text.zip' 
         type: string
+  push:
+    branches:
+      - main
+    paths:
+      - 'word_count/**'
+      - '!tf_backend/**'
 
 
 jobs:

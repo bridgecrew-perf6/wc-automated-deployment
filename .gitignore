@@ -134,5 +134,11 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# project inputs folder
-word_count/input_files
+# terraform
+**/.terraform
+**/*.tfstate
+**/*.tfstate.backup
+
+# commited since it's doesn't have a backend
+!tf_backend/*.tfstate
+!tf_backend/*.tfstate.backup
