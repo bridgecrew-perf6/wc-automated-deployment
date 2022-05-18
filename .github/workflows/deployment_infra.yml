@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Create Infrastructure
 
 on:
   workflow_dispatch:

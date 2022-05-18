@@ -13,7 +13,6 @@ on:
       - main
     paths:
       - 'word_count/**'
-      - '!tf_backend/**'
 
 
 jobs:
@@ -30,6 +29,7 @@ jobs:
         unzip $(basename ${{ github.event.inputs.text_files_zip_url }}) -d word_count/input_files/
         ls -la word_count/input_files/
     - name: Build the Docker image
+      working-directory: ./word_count
       run: docker build . --tag "wc-python:${{env.BUILD_TIMESTAMP}}"
     - name: Run docker image
       run: docker run "wc-python:${{env.BUILD_TIMESTAMP}}"
