@@ -138,6 +138,8 @@ dmypy.json
 **/.terraform
 **/*.tfstate
 **/*.tfstate.backup
+# affecting to local testing otherwise this should be commited in order to keep consistency, need to fix
+**/.terraform.lock.hcl 
 
 # commited since it's doesn't have a backend
 !tf_backend/*.tfstate
