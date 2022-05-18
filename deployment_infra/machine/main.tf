@@ -116,3 +116,7 @@ resource "aws_instance" "main" {
     Name = var.enviroment_name
   }
 }
+
+output "instance_id" {
+  value = aws_instance.main.id
+}
