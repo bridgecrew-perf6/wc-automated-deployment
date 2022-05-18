@@ -26,7 +26,11 @@ jobs:
     - name: Apply Terraform
       id: tf_apply  
       working-directory: ./deployment_infra
-      run: terraform apply -no-color -auto-approve -var="aws_access_key=${{ secrets.WC_TF_AWS_ACCESS_KEY }}" -var="aws_secret_key=${{ secrets.WC_TF_AWS_SECRET_KEY }}" 
+      run: | 
+        terraform apply -no-color -auto-approve \
+        -var="aws_access_key=${{ secrets.WC_TF_AWS_ACCESS_KEY }}" \
+        -var="aws_secret_key=${{ secrets.WC_TF_AWS_SECRET_KEY }}" \
+        -var="password=${{ secrets.WC_SSH_PASSWORD }}"
 
   configure_vm:
     runs-on: ubuntu-latest

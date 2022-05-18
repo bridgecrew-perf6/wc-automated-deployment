@@ -1,5 +1,6 @@
 variable "enviroment_name" {}
 variable "subnet_id" {}
+variable "password" {}
 variable "machine_size" {
   default = "t3.micro"
 }
@@ -10,7 +11,7 @@ data "aws_ami" "linux" {
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-ebs"]
+    values = ["amzn2-ami-kernel-5.10-hvm-2.0.*-x86_64-gp2"]
   }
 }
 
@@ -44,6 +45,11 @@ EOF
   tags = {
       tag-key = "tag-value"
   }
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_attach" {
+  role       = aws_iam_role.wc_vm_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
 }
 
 data "aws_ssm_parameter" "ecr_registry" {
@@ -96,6 +102,10 @@ resource "aws_instance" "main" {
   ami           = data.aws_ami.linux.id
   instance_type = var.machine_size
   iam_instance_profile = "${aws_iam_instance_profile.wc_vm_profile.name}"
+  user_data     = templatefile("${path.module}/linux_init.tpl", {
+    username = "ec2-user"
+    password = var.password
+  })
 
   network_interface {
     network_interface_id = aws_network_interface.main.id

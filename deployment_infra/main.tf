@@ -7,4 +7,5 @@ module "machine" {
   source = "./machine"
   subnet_id = module.network.subnet_id
   enviroment_name = var.enviroment_name
+  password = var.password
 }
