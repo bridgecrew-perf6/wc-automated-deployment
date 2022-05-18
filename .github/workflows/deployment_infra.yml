@@ -17,7 +17,7 @@ jobs:
       with:
       terraform_version: 1.1.7
 
-      run: terraform init -backend-config="access_key=${{ secrets.WC_TF_AWS_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.WC_TF_AWS_SECRET_KEY }}"
+    - run: terraform init -backend-config="access_key=${{ secrets.WC_TF_AWS_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.WC_TF_AWS_SECRET_KEY }}"
 
     - id: tf_apply  
       run: terraform apply -no-color -auto-approve -var="aws_access_key=${{ secrets.WC_TF_AWS_ACCESS_KEY }}" -var="aws_secret_key=${{ secrets.WC_TF_AWS_SECRET_KEY }}" 
