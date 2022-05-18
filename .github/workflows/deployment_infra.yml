@@ -28,6 +28,25 @@ jobs:
       working-directory: ./deployment_infra
       run: terraform apply -no-color -auto-approve -var="aws_access_key=${{ secrets.WC_TF_AWS_ACCESS_KEY }}" -var="aws_secret_key=${{ secrets.WC_TF_AWS_SECRET_KEY }}" 
 
-    - run: echo ${{ steps.tf_apply.outputs.stdout }}
-    - run: echo ${{ steps.tf_apply.outputs.stderr }}
-    - run: echo ${{ steps.tf_apply.outputs.exitcode }}
+  configure_vm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: AWS SSM Send-Command
+        uses: peterkimzz/aws-ssm-send-command@master
+        id: ssm
+        with:
+          aws-region: us-east-1
+          aws-access-key-id: ${{ secrets.WC_TF_AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.WC_TF_AWS_SECRET_KEY }}
+          instance-ids: i-082ebce781304ad4f
+
+          working-directory: /home/
+          command: ls -al
+          comment: Hello world!
+
+      # Catch SSM outputs
+      - name: Get the outputs
+        run: echo "The Command id is ${{ steps.ssm.outputs.command-id }}"
