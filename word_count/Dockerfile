@@ -2,6 +2,7 @@ FROM python:3.10-alpine
 
 WORKDIR /usr/src/app
 
-COPY word_count .
+COPY src/ .
+COPY input_files/ input_files/
 
 CMD [ "python", "./main.py" ]
