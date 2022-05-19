@@ -2,36 +2,10 @@ name: Word Counter Build and Deployment
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 jobs:
-  check_changes:
-    runs-on: ubuntu-latest
-    # Set job outputs to values from filter step
-    outputs:
-      deployment_infra: ${{ steps.filter.outputs.deployment_infra }}
-      word_count: ${{ steps.filter.outputs.word_count }}
-      action_script: ${{ steps.filter.outputs.action_script }}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          base: "main"
-          filters: |
-            word_count:
-              - 'word_count/**'
-            deployment_infra:
-              - 'deployment_infra/**'
-            action_script:
-              - '.github/workflows/**'
-
 
   create_infrastructure:
-    needs: check_changes
-    if: ${{ needs.check_changes.outputs.deployment_infra == 'true' }} || ${{ needs.check_changes.outputs.action_script == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -64,15 +38,14 @@ jobs:
   
 
   release_image:
-    needs: [check_changes, create_infrastructure]
-    if: ${{ needs.check_changes.outputs.word_count == 'true' }} || ${{ needs.check_changes.outputs.action_script == 'true' }}
+    needs: [create_infrastructure]
     runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
 
     outputs:
-      ecr_registry: "${{ steps.login-ecr.outputs.registry }}"
+      ecr_registry: "${{ steps.login_ecr.outputs.registry }}"
 
     steps:
       - uses: actions/checkout@v3
@@ -86,12 +59,12 @@ jobs:
           aws-region: us-east-1
 
       - name: Login to Amazon ECR
-        id: login-ecr
+        id: login_ecr
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build, tag, and push image to Amazon ECR
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
           ECR_REPOSITORY: wc-python
           IMAGE_TAG: latest
         working-directory: ./word_count
@@ -100,8 +73,7 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
   configure_vm:
-    needs: [check_changes, create_infrastructure, release_image]
-    if: ${{ needs.check_changes.outputs.deployment_infra == 'true' }} || ${{ needs.check_changes.outputs.action_script == 'true' }}
+    needs: [create_infrastructure, release_image]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -133,9 +105,4 @@ jobs:
             export AWS_ECR_DISABLE_CACHE=true
             echo "{ \"credsStore\": \"ecr-login\" }" > ~/.docker/config.json
             systemctl restart docker.service
-            docker run -d "${{ needs.release_image.outputs.ecr_registry }}:latest"
-          comment: Run Docker
-
-      # Catch SSM outputs
-      - name: Get the outputs
-        run: echo "The Command id is ${{ steps.ssm.outputs.command-id }}"
+          comment: Install Docker and Set Registry Authentication Helper
