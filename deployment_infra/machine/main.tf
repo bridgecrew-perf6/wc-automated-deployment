@@ -78,9 +78,11 @@ resource "aws_iam_role_policy" "ecr_read_policy" {
         "ecr:DescribeRepositories",
         "ecr:ListImages",
         "ecr:DescribeImages",
-        "ecr:BatchGetImage"
+        "ecr:BatchGetImage",
+        "ecr-public:GetAuthorizationToken",
+        "sts:GetServiceBearerToken"
       ],
-      "Resource": "${data.aws_ssm_parameter.ecr_arn.value}/*"
+      "Resource": "*"
     },
     {
       "Sid": "GrantECRAuthAccess",

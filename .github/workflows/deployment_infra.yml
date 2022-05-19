@@ -61,44 +61,10 @@ jobs:
       - id: get_instance_id
         working-directory: deployment_infra
         run: terraform output -raw instance_id
-      
+  
 
-  configure_vm:
+  release_image:
     needs: [check_changes, create_infrastructure]
-    if: ${{ needs.check_changes.outputs.deployment_infra == 'true' }} || ${{ needs.check_changes.outputs.action_script == 'true' }}
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-
-    steps:
-      - name: AWS SSM Send-Command
-        uses: peterkimzz/aws-ssm-send-command@master
-        id: ssm
-        with:
-          aws-region: us-east-1
-          aws-access-key-id: "${{ secrets.WC_TF_AWS_ACCESS_KEY }}"
-          aws-secret-access-key: "${{ secrets.WC_TF_AWS_SECRET_KEY }}"
-          instance-ids: ${{ needs.create_infrastructure.outputs.instance_id }}
-
-          working-directory: /home/ec2-user
-          command: | 
-            sudo yum update -y
-            sudo yum install docker -y
-            sudo usermod -a -G docker ec2-user
-            newgrp docker
-            sudo systemctl enable docker.service
-            sudo systemctl start docker.service
-            sudo amazon-linux-extras enable docker
-            sudo yum install amazon-ecr-credential-helper -y
-          comment: Install Docker
-
-      # Catch SSM outputs
-      - name: Get the outputs
-        run: echo "The Command id is ${{ steps.ssm.outputs.command-id }}"
-
-  build:
-    needs: [check_changes, create_infrastructure, configure_vm]
     if: ${{ needs.check_changes.outputs.word_count == 'true' }} || ${{ needs.check_changes.outputs.action_script == 'true' }}
     runs-on: ubuntu-latest
     defaults:
@@ -142,3 +108,43 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+  configure_vm:
+    needs: [check_changes, create_infrastructure, release_image]
+    if: ${{ needs.check_changes.outputs.deployment_infra == 'true' }} || ${{ needs.check_changes.outputs.action_script == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: AWS SSM Send-Command
+        uses: peterkimzz/aws-ssm-send-command@master
+        id: ssm
+        with:
+          aws-region: us-east-1
+          aws-access-key-id: "${{ secrets.WC_TF_AWS_ACCESS_KEY }}"
+          aws-secret-access-key: "${{ secrets.WC_TF_AWS_SECRET_KEY }}"
+          instance-ids: ${{ needs.create_infrastructure.outputs.instance_id }}
+
+          working-directory: /home/ec2-user
+          command: | 
+            sudo su
+            yum update -y
+            yum install docker -y
+            usermod -a -G docker ec2-user
+            newgrp docker
+            systemctl enable docker.service
+            systemctl start docker.service
+            amazon-linux-extras enable docker
+            yum install amazon-ecr-credential-helper -y
+            mkdir -p /home/ec2-user/.docker/
+            export AWS_ECR_DISABLE_CACHE=true
+            echo "{ \"credsStore\": \"ecr-login\" }" > ~/.docker/config.json
+            systemctl restart docker.service
+            docker run -d 131494678446.dkr.ecr.us-east-1.amazonaws.com/wc-python:latest
+          comment: Run Docker
+
+      # Catch SSM outputs
+      - name: Get the outputs
+        run: echo "The Command id is ${{ steps.ssm.outputs.command-id }}"
