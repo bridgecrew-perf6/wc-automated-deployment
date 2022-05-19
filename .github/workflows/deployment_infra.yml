@@ -107,16 +107,38 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Set current date as env variable
-        run: echo "BUILD_TIMESTAMP=$(date +%s)" >> $GITHUB_ENV
+      # - name: Set current date as env variable
+      #   run: echo "BUILD_TIMESTAMP=$(date +%s)" >> $GITHUB_ENV
       # - name: "Download zip file"
       #   if: ${{ github.event.inputs.text_files_zip_url != '' }}
       #   run: | 
       #     wget ${{ github.event.inputs.text_files_zip_url }}
       #     unzip $(basename ${{ github.event.inputs.text_files_zip_url }}) -d word_count/input_files/
       #     ls -la word_count/input_files/
-      - name: Build the Docker image
+      # - name: Build the Docker image
+      #   working-directory: ./word_count
+      #   run: docker build . --tag "wc-python:${{env.BUILD_TIMESTAMP}}"
+      # - name: Run docker image
+      #   run: docker run "wc-python:${{env.BUILD_TIMESTAMP}}"
+      #     - name: Check out code
+    
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.WC_TF_AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.WC_TF_AWS_SECRET_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: wc-python
+          IMAGE_TAG: latest
         working-directory: ./word_count
-        run: docker build . --tag "wc-python:${{env.BUILD_TIMESTAMP}}"
-      - name: Run docker image
-        run: docker run "wc-python:${{env.BUILD_TIMESTAMP}}"
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
