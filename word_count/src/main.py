@@ -1,3 +1,5 @@
+# Count words in text files added into input_files folder
+
 from os.path import (
     dirname,
     realpath
