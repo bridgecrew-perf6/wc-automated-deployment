@@ -3,15 +3,21 @@ name: Create & Configure Infrastructure
 on:
   workflow_dispatch:
     inputs:
-      destroy_and_create:
+      destroy_and_recreate:
         type: boolean
-        description: Destroy Infrastructures and Recreate
+        description: Destroy and recreate the environment 
+        required: false
+        default: false
+      destroy:
+        type: boolean
+        description: Destroy the environment
         required: false
         default: false
 
+
 jobs:
 
-  create_infrastructure:
+  infrastructure:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -31,7 +37,7 @@ jobs:
         run: terraform init -backend-config="access_key=${{ secrets.WC_TF_AWS_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.WC_TF_AWS_SECRET_KEY }}"
 
       - name: Destroy Infra
-        if: ${{ github.event.inputs.destroy_and_create == 'true' }}
+        if: ${{ github.event.inputs.destroy_and_recreate == 'true' || github.event.inputs.destroy == 'true' }}
         working-directory: deployment_infra
         run: | 
           terraform destroy -no-color -auto-approve \
@@ -41,6 +47,7 @@ jobs:
 
       - name: Apply Terraform
         id: tf_apply  
+        if: ${{ github.event.inputs.destroy == 'false' }}
         working-directory: deployment_infra
         run: | 
           terraform apply -no-color -auto-approve \
@@ -53,7 +60,8 @@ jobs:
   
 
   configure_vm:
-    needs: [create_infrastructure]
+    needs: [infrastructure]
+    if: ${{ github.event.inputs.destroy == 'false' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -67,7 +75,7 @@ jobs:
           aws-region: us-east-1
           aws-access-key-id: "${{ secrets.WC_TF_AWS_ACCESS_KEY }}"
           aws-secret-access-key: "${{ secrets.WC_TF_AWS_SECRET_KEY }}"
-          instance-ids: ${{ needs.create_infrastructure.outputs.instance_id }}
+          instance-ids: ${{ needs.infrastructure.outputs.instance_id }}
 
           working-directory: /home/ec2-user
           command: | 
@@ -85,4 +93,4 @@ jobs:
             echo "{ \"credsStore\": \"ecr-login\" }" > ~/.docker/config.json
             systemctl restart docker.service
           comment: Install Docker and Set Registry Authentication Helper
-      - run: echo "## Add this to the repositroy secrets **WC_EC2_INSTANCE_ID = ${{ needs.create_infrastructure.outputs.instance_id }}**" >> $GITHUB_STEP_SUMMARY
+      - run: echo "## Add this to the repositroy secrets **WC_EC2_INSTANCE_ID = ${{ needs.infrastructure.outputs.instance_id }}**" >> $GITHUB_STEP_SUMMARY

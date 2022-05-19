@@ -3,15 +3,20 @@ name: Create ECR Registry
 on:
   workflow_dispatch:
     inputs:
-      destroy_and_create:
+      destroy_and_recreate:
         type: boolean
-        description: Destroy Infrastructures and Recreate
+        description: Destroy and recreate ecr registry 
+        required: false
+        default: false
+      destroy:
+        type: boolean
+        description: Destroy ecr registry
         required: false
         default: false
 
 jobs:
 
-  create_infrastructure:
+  infrastructure:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -31,7 +36,7 @@ jobs:
         run: terraform init -backend-config="access_key=${{ secrets.WC_TF_AWS_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.WC_TF_AWS_SECRET_KEY }}"
 
       - name: Destroy Infra
-        if: ${{ github.event.inputs.destroy_and_create == 'true' }}
+        if: ${{ github.event.inputs.destroy_and_recreate == 'true' || github.event.inputs.destroy == 'true' }}
         working-directory: ecr_registry
         run: | 
           terraform destroy -no-color -auto-approve \
@@ -39,6 +44,7 @@ jobs:
           -var="aws_secret_key=${{ secrets.WC_TF_AWS_SECRET_KEY }}"
 
       - name: Apply Terraform
+        if: ${{ github.event.inputs.destroy == 'false' }}
         id: tf_apply  
         working-directory: ecr_registry
         run: | 
