@@ -55,7 +55,7 @@ def main():
         word_count = 0
         with open(text_file) as file_obj:
             for line in file_obj:
-                # split by using spaces,tabs,newlines and remove empty elements
+                # split by using spaces,tabs,newlines and remove empty elements.
                 splitted_line = list(filter(
                     None,
                     re.split('[ \t\n]', line))
