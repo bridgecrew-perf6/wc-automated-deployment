@@ -1,4 +1,4 @@
-name: Deploy Script Changes
+name: Deploy Word Counter
 
 on:
   push:
@@ -58,7 +58,7 @@ jobs:
           aws-region: us-east-1
           aws-access-key-id: "${{ secrets.WC_TF_AWS_ACCESS_KEY }}"
           aws-secret-access-key: "${{ secrets.WC_TF_AWS_SECRET_KEY }}"
-          instance-ids: ${{ needs.create_infrastructure.outputs.instance_id }}
+          instance-ids: ${{ secrets.WC_EC2_INSTANCE_ID }}
 
           working-directory: /home/ec2-user
           command: | 

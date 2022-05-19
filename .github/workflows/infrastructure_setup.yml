@@ -1,4 +1,4 @@
-name: Word Counter Build and Deployment 
+name: Create & Configure Infrastructure
 
 on:
   workflow_dispatch:
@@ -106,3 +106,4 @@ jobs:
             echo "{ \"credsStore\": \"ecr-login\" }" > ~/.docker/config.json
             systemctl restart docker.service
           comment: Install Docker and Set Registry Authentication Helper
+      - run: echo "### Configured instance ${{ needs.create_infrastructure.outputs.instance_id }} :white_check_mark:" >> $GITHUB_STEP_SUMMARY
