@@ -61,20 +61,6 @@ jobs:
       - id: get_instance_id
         working-directory: deployment_infra
         run: terraform output -raw instance_id
-      # - name: Set Infra Details
-      #   working-directory: deployment_infra
-      #   run: |
-      #     USER="$(whoami)"
-      #     echo $INSTANCE_ID
-      #     echo $USER
-      #     echo "INSTANCE_ID=${{ steps.get_instance_id.outputs.stdout }}" > ../infrastructure_details.txt
-      #     echo "USER=$USER" >> ../infrastructure_details.txt
-      #     cat ../infrastructure_details.txt
-      # - name: Upload infrastructure_details.txt
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: infrastructure_details
-      #     path: infrastructure_details.txt
       
 
   configure_vm:
@@ -86,15 +72,6 @@ jobs:
         shell: bash
 
     steps:
-      # - name: Download infrastructure_details.txt
-      #   uses: actions/download-artifact@v3
-      #   with:
-      #     name: infrastructure_details
-      # - run: |
-      #     cat infrastructure_details.txt
-      #     source infrastructure_details.txt
-      #     echo "INSTANCE_ID=$(echo $INSTANCE_ID)" >> $GITHUB_ENV
-      #     echo "USER=$(echo $USER)" >> $GITHUB_ENV
       - name: AWS SSM Send-Command
         uses: peterkimzz/aws-ssm-send-command@master
         id: ssm
@@ -104,9 +81,17 @@ jobs:
           aws-secret-access-key: "${{ secrets.WC_TF_AWS_SECRET_KEY }}"
           instance-ids: ${{ needs.create_infrastructure.outputs.instance_id }}
 
-          working-directory: /home/
-          command: ls -al
-          comment: Hello world!
+          working-directory: /home/ec2-user
+          command: | 
+            sudo yum update -y
+            sudo yum install docker -y
+            sudo usermod -a -G docker ec2-user
+            newgrp docker
+            sudo systemctl enable docker.service
+            sudo systemctl start docker.service
+            sudo amazon-linux-extras enable docker
+            sudo yum install amazon-ecr-credential-helper -y
+          comment: Install Docker
 
       # Catch SSM outputs
       - name: Get the outputs
