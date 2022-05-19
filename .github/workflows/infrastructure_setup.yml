@@ -2,6 +2,12 @@ name: Create & Configure Infrastructure
 
 on:
   workflow_dispatch:
+    inputs:
+      destroy_and_create:
+        type: boolean
+        description: Destroy Infrastructures and Recreate
+        required: false
+        default: false
 
 jobs:
 
@@ -23,6 +29,15 @@ jobs:
       - name: Init Terraform
         working-directory: deployment_infra
         run: terraform init -backend-config="access_key=${{ secrets.WC_TF_AWS_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.WC_TF_AWS_SECRET_KEY }}"
+
+      - name: Destroy Infra
+        if: ${{ github.event.inputs.destroy_and_create == 'true' }}
+        working-directory: deployment_infra
+        run: | 
+          terraform destroy -no-color -auto-approve \
+          -var="aws_access_key=${{ secrets.WC_TF_AWS_ACCESS_KEY }}" \
+          -var="aws_secret_key=${{ secrets.WC_TF_AWS_SECRET_KEY }}" \
+          -var="password=${{ secrets.WC_SSH_PASSWORD }}"
 
       - name: Apply Terraform
         id: tf_apply  

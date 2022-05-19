@@ -1,6 +1,7 @@
 name: Deploy Word Counter
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
