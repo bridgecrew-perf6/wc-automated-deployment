@@ -37,50 +37,14 @@ jobs:
         run: terraform output -raw instance_id
   
 
-  release_image:
+  configure_vm:
     needs: [create_infrastructure]
     runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
 
-    outputs:
-      ecr_registry: "${{ steps.login_ecr.outputs.registry }}"
-
     steps:
-      - uses: actions/checkout@v3
-    
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          mask-aws-account-id: no
-          aws-access-key-id: ${{ secrets.WC_TF_AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.WC_TF_AWS_SECRET_KEY }}
-          aws-region: us-east-1
-
-      - name: Login to Amazon ECR
-        id: login_ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Build, tag, and push image to Amazon ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
-          ECR_REPOSITORY: wc-python
-          IMAGE_TAG: latest
-        working-directory: ./word_count
-        run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-
-  configure_vm:
-    needs: [create_infrastructure, release_image]
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-
-    steps:
-      - run: echo "${{ needs.release_image.outputs.ecr_registry }}"
       - name: AWS SSM Send-Command
         uses: peterkimzz/aws-ssm-send-command@master
         id: ssm
@@ -106,4 +70,4 @@ jobs:
             echo "{ \"credsStore\": \"ecr-login\" }" > ~/.docker/config.json
             systemctl restart docker.service
           comment: Install Docker and Set Registry Authentication Helper
-      - run: echo "### Configured instance ${{ needs.create_infrastructure.outputs.instance_id }} :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+      - run: echo "## Add this to the repositroy secrets **WC_EC2_INSTANCE_ID = ${{ needs.create_infrastructure.outputs.instance_id }}**" >> $GITHUB_STEP_SUMMARY
