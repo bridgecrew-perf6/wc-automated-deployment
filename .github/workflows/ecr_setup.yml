@@ -1,0 +1,47 @@
+name: Create ECR Registry
+
+on:
+  workflow_dispatch:
+    inputs:
+      destroy_and_create:
+        type: boolean
+        description: Destroy Infrastructures and Recreate
+        required: false
+        default: false
+
+jobs:
+
+  create_infrastructure:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    outputs:
+      instance_id: ${{ steps.get_instance_id.outputs.stdout }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.1.7
+
+      - name: Init Terraform
+        working-directory: ecr_registry
+        run: terraform init -backend-config="access_key=${{ secrets.WC_TF_AWS_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.WC_TF_AWS_SECRET_KEY }}"
+
+      - name: Destroy Infra
+        if: ${{ github.event.inputs.destroy_and_create == 'true' }}
+        working-directory: ecr_registry
+        run: | 
+          terraform destroy -no-color -auto-approve \
+          -var="aws_access_key=${{ secrets.WC_TF_AWS_ACCESS_KEY }}" \
+          -var="aws_secret_key=${{ secrets.WC_TF_AWS_SECRET_KEY }}"
+
+      - name: Apply Terraform
+        id: tf_apply  
+        working-directory: ecr_registry
+        run: | 
+          terraform apply -no-color -auto-approve \
+          -var="aws_access_key=${{ secrets.WC_TF_AWS_ACCESS_KEY }}" \
+          -var="aws_secret_key=${{ secrets.WC_TF_AWS_SECRET_KEY }}"

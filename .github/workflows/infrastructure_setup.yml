@@ -80,7 +80,7 @@ jobs:
             systemctl start docker.service
             amazon-linux-extras enable docker
             yum install amazon-ecr-credential-helper -y
-            mkdir -p /home/ec2-user/.docker/
+            mkdir -p ~/.docker/
             export AWS_ECR_DISABLE_CACHE=true
             echo "{ \"credsStore\": \"ecr-login\" }" > ~/.docker/config.json
             systemctl restart docker.service
