@@ -95,6 +95,6 @@ dmypy.json
 **/.terraform.lock.hcl 
 
 # commited since it's doesn't have a backend
-!tf_backend/*.tfstate
-!tf_backend/*.tfstate.backup
+# !tf_backend/*.tfstate
+# !tf_backend/*.tfstate.backup
 notes.txt
